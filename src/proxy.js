@@ -50,12 +50,14 @@ module.exports = function proxyPolyfill() {
     // are a bit more careful. Copy the internal parts of handler to prevent user changes.
     const unsafeHandler = handler;
     handler = { 'get': null, 'set': null, 'apply': null, 'construct': null };
+
     for (let k in unsafeHandler) {
       if (!(k in handler)) {
         throw new TypeError(`Proxy polyfill does not support trap '${k}'`);
       }
       handler[k] = unsafeHandler[k];
     }
+
     if (typeof unsafeHandler === 'function') {
       // Allow handler to be a function (which has an 'apply' method). This matches what is
       // probably a bug in native versions. It treats the apply call as a trap to be configured.
@@ -89,6 +91,7 @@ module.exports = function proxyPolyfill() {
         }
         return target.apply(this, args);
       };
+
       isMethod = true;
     } else if (target instanceof Array) {
       proxy = [];
@@ -104,6 +107,7 @@ module.exports = function proxyPolyfill() {
       throwRevoked('get');
       return this[prop];
     };
+
     const setter = handler.set ? function(prop, value) {
       throwRevoked('set');
       const status = handler.set(this, prop, value, proxy);
@@ -127,7 +131,8 @@ module.exports = function proxyPolyfill() {
 
     propertyNames.forEach(function(prop) {
       if ((isMethod || isArray) && prop in proxy) {
-        return;  // ignore properties already here, e.g. 'bind', 'prototype' etc
+        // ignore properties already here, e.g. 'bind', 'prototype' etc
+        return;
       }
 
       const real = Object.getOwnPropertyDescriptor(target, prop);
@@ -145,6 +150,7 @@ module.exports = function proxyPolyfill() {
     // TODO(samthor): We don't allow prototype methods to be set. It's (even more) awkward.
     // An alternative here would be to _just_ clone methods to keep behavior consistent.
     let prototypeOk = true;
+
     if (Object.setPrototypeOf) {
       Object.setPrototypeOf(proxy, Object.getPrototypeOf(target));
     } else if (proxy.__proto__) {
@@ -152,6 +158,7 @@ module.exports = function proxyPolyfill() {
     } else {
       prototypeOk = false;
     }
+
     if (handler.get || !prototypeOk) {
       for (let k in target) {
         if (propertyMap[k]) {
@@ -161,7 +168,13 @@ module.exports = function proxyPolyfill() {
       }
     }
 
-    // The Proxy polyfill cannot handle adding new properties. Seal the target and proxy.
+    /**
+     * To act on every property modification,
+     * we assign to each target/proxy property a new getter.
+     * A problem rises: we cannot detect new properties (Native proxies
+     * are also used for this). We have to Seal the target and the proxy.
+     */
+
     Object.seal(target);
     Object.seal(proxy);
 
