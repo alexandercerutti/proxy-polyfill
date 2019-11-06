@@ -118,7 +118,10 @@ module.exports = function proxyPolyfill() {
     };
 
     // Clone direct properties (i.e., not part of a prototype).
-    const propertyNames = Object.getOwnPropertyNames(target);
+    const propertyNames = [
+      ...Object.getOwnPropertyNames(target),
+      ...(window.Symbol && Object.getOwnPropertySymbols ? Object.getOwnPropertySymbols(target) : [])
+    ];
     const propertyMap = {};
     propertyNames.forEach(function(prop) {
       if ((isMethod || isArray) && prop in proxy) {
@@ -167,4 +170,4 @@ module.exports = function proxyPolyfill() {
   };
 
   return ProxyPolyfill;
-}
+};
