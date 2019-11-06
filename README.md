@@ -112,6 +112,13 @@ import ProxyPolyfill from 'proxy-polyfill/src/proxy';
 
 // Then use...
 const myProxy = new ProxyPolyfill(...);
+
+// or
+
+if (!window.Proxy) {
+  // Returns the Proxy Object
+  window.Proxy = ProxyPolyfill();
+}
 ```
 
 ## Installation
