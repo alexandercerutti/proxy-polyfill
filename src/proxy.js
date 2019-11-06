@@ -175,7 +175,6 @@ module.exports = function proxyPolyfill() {
      * are also used for this). We have to Seal the target and the proxy.
      */
 
-    Object.seal(target);
     Object.seal(proxy);
 
     return proxy;  // nb. if isMethod is true, proxy != this
