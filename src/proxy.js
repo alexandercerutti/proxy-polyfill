@@ -120,19 +120,23 @@ module.exports = function proxyPolyfill() {
     // Clone direct properties (i.e., not part of a prototype).
     const propertyNames = [
       ...Object.getOwnPropertyNames(target),
+      // Using `window` to allow Internet Explorer 11 to return 'undefined' instead of error
       ...(window.Symbol && Object.getOwnPropertySymbols ? Object.getOwnPropertySymbols(target) : [])
     ];
     const propertyMap = {};
+
     propertyNames.forEach(function(prop) {
       if ((isMethod || isArray) && prop in proxy) {
         return;  // ignore properties already here, e.g. 'bind', 'prototype' etc
       }
+
       const real = Object.getOwnPropertyDescriptor(target, prop);
       const desc = {
         enumerable: !!real.enumerable,
         get: getter.bind(target, prop),
         set: setter.bind(target, prop),
       };
+
       Object.defineProperty(proxy, prop, desc);
       propertyMap[prop] = true;
     });
